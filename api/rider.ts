@@ -69,14 +69,12 @@ router.put("/update/:rid", (req, res) => {
         UPDATE rider 
         SET 
             name = ?, 
-            password = ?, 
             plate = ?, 
             picture = ? 
         WHERE rid = ?`; // เปลี่ยนจาก id เป็น uid
 
         const formattedUpdateSql = mysql.format(updateSql, [
             users.name,
-            users.password,
             users.plate,
             users.picture,
             uid // ใช้ uid ให้สอดคล้องกัน
