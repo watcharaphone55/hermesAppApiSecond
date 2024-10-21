@@ -6,14 +6,20 @@ import { RiderRegisterReq } from "../models/Request/rider_register_req";
 export const router = express.Router();
 
 // select all rider
-router.get('/', (req, res) => {
-    let sql = 'SELECT * FROM rider';
+router.get('/:rid', (req, res) => {
+    let rid = req.params.rid;
+
+    let sql = 'SELECT * FROM user WHERE rid = ?'
+
+    sql = mysql.format(sql, [
+        rid
+    ])
 
     conn.query(sql, (err, result) => {
         if(err) {
             res.status(400).json({msg: err.message});
         } else {
-            res.json({result});
+            res.json(result);
         }
     })
 });
