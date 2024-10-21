@@ -9,7 +9,7 @@ export const router = express.Router();
 router.get('/:rid', (req, res) => {
     let rid = req.params.rid;
 
-    let sql = 'SELECT * FROM user WHERE rid = ?'
+    let sql = 'SELECT * FROM rider WHERE rid = ?'
 
     sql = mysql.format(sql, [
         rid
