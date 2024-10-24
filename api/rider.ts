@@ -25,27 +25,49 @@ router.get('/:rid', (req, res) => {
 });
 
 // register for user
-router.post('/register', (req, res)=>{
+router.post('/register', (req, res) => {
     let riders: RiderRegisterReq = req.body;
     console.log(riders);
-    
 
-    let sql = "INSERT INTO rider (phone, name, password, picture, plate) VALUES (?,?,?,?,?)";
-    sql = mysql.format(sql, [
-        riders.phone,
-        riders.name,
-        riders.password,
-        riders.picture,
-        riders.plate
-    ]);
-    conn.query(sql, (err, result) => {
-        if(err) {
-            res.status(400).json({msg: err.message});
-        } else {
-            res.json({affected_rows: result.affectedRows, last_idx: result.insertId});
+    // SQL query to check if the phone number exists in the user table
+    let sql_check = "SELECT phone FROM user WHERE phone = ?";
+    let sql_insert = "INSERT INTO rider (phone, name, password, picture, plate) VALUES (?,?,?,?,?)";
+
+    // Check if the phone number exists in the user table
+    conn.query(sql_check, [riders.phone], (err, result) => {
+        if (err) {
+            return res.status(400).json({ msg: err.message });
         }
-    })
+
+        if (result.length > 0) {
+            // Phone number already exists in the user table
+            return res.status(409).json({ msg: "Phone number already registered in user table" });
+        }
+
+        // Proceed to insert the new rider
+        const sql = mysql.format(sql_insert, [
+            riders.phone,
+            riders.name,
+            riders.password,
+            riders.picture,
+            riders.plate
+        ]);
+
+        conn.query(sql, (err, result) => {
+            if (err) {
+                return res.status(400).json({ msg: err.message });
+            }
+
+            // Successful registration
+            res.status(201).json({ 
+                msg: "Rider registered successfully", 
+                affected_rows: result.affectedRows, 
+                last_idx: result.insertId 
+            });
+        });
+    });
 });
+
 
 router.put("/update/:rid", (req, res) => {
     const uid = req.params.rid; 

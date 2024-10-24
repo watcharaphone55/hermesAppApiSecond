@@ -3,6 +3,7 @@ import { conn } from "../dbconnect";
 import mysql from "mysql";
 import { UserRegisterReq } from "../models/Request/user_register_req";
 import { RiderRegisterReq } from "../models/Request/rider_register_req";
+import { SelectRiderPhone } from "../models/Response/rider_phone_res";
 
 export const router = express.Router();
 
@@ -47,26 +48,44 @@ router.get('/search/:phone/:uid', (req, res) => {
 });
 
 // register for user
-router.post('/register', (req, res)=>{
+router.post('/register', (req, res) => {
     let users: UserRegisterReq = req.body;
 
-    let sql = "INSERT INTO user (phone, name, password, address, lat, lng, picture) VALUES (?,?,?,?,?,?,?)";
-    sql = mysql.format(sql, [
-        users.phone,
-        users.name,
-        users.password,
-        users.address,
-        users.lat,
-        users.lng,
-        users.picture,
-    ]);
-    conn.query(sql, (err, result) => {
-        if(err) {
-            res.status(400).json({msg: err.message});
-        } else {
-            res.json({affected_rows: result.affectedRows, last_idx: result.insertId});
+    // SQL query to check if the phone number exists
+    let sql_check = "SELECT phone FROM rider WHERE phone = ?";
+    let sql_insert = "INSERT INTO user (phone, name, password, address, lat, lng, picture) VALUES (?,?,?,?,?,?,?)";
+
+    // Check if the phone number exists
+    conn.query(sql_check, [users.phone], (err, result) => {
+        if (err) {
+            return res.status(400).json({ msg: err.message });
         }
-    })
+
+        if (result.length > 0) {
+            // Phone number already exists
+            return res.status(409).json({ msg: "Phone number already registered" });
+        }
+
+        // Proceed to insert the new user
+        const sql = mysql.format(sql_insert, [
+            users.phone,
+            users.name,
+            users.password,
+            users.address,
+            users.lat,
+            users.lng,
+            users.picture,
+        ]);
+
+        conn.query(sql, (err, result) => {
+            if (err) {
+                return res.status(400).json({ msg: err.message });
+            }
+
+            // Successful registration
+            res.status(201).json({ msg: "User registered successfully", userId: result.insertId });
+        });
+    });
 });
 
 // Get customer
