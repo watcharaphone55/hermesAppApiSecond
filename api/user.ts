@@ -162,23 +162,36 @@ router.post("/login", (req, res) => {
 // });
 
 router.put("/update/:uid", (req, res) => {
-    const uid = req.params.uid; 
-    const users = req.body; 
+    const uid = req.params.uid;
+    const newData = req.body;
 
-    // คำสั่ง SELECT เพื่อตรวจสอบว่ามีผู้ใช้ที่มี uid นี้หรือไม่
+    // Step 1: SELECT the current data from the database
     const selectSql = `SELECT * FROM user WHERE uid = ?`;
-    
+
     conn.query(selectSql, [uid], (err, results) => {
         if (err) {
             return res.status(400).json({ msg: err.message });
         }
 
-        // ตรวจสอบว่ามีผลลัพธ์จากการ SELECT หรือไม่
+        // Check if the user exists
         if (results.length === 0) {
             return res.status(404).json({ msg: "User not found" });
         }
 
-        // ถ้าพบผู้ใช้ ให้ทำการ UPDATE ข้อมูล
+        // Retrieve the current data
+        const currentData = results[0];
+
+        // Step 2: Update fields if they have new values, otherwise keep old values
+        const updatedUser = {
+            name: newData.name || currentData.name,
+            password: newData.password || currentData.password,
+            address: newData.address || currentData.address,
+            lat: (newData.lat !== undefined && newData.lat !== 0) ? newData.lat : currentData.lat,
+            lng: (newData.lng !== undefined && newData.lng !== 0) ? newData.lng : currentData.lng,
+            picture: newData.picture || currentData.picture
+        };
+
+        // SQL for updating user data
         const updateSql = `
         UPDATE user 
         SET 
@@ -188,19 +201,19 @@ router.put("/update/:uid", (req, res) => {
             lat = ?, 
             lng = ?, 
             picture = ? 
-        WHERE uid = ?`; // เปลี่ยนจาก id เป็น uid
+        WHERE uid = ?`;
 
         const formattedUpdateSql = mysql.format(updateSql, [
-            users.name,
-            users.password,
-            users.address,
-            users.lat,
-            users.lng,
-            users.picture,
-            uid // ใช้ uid ให้สอดคล้องกัน
+            updatedUser.name,
+            updatedUser.password,
+            updatedUser.address,
+            updatedUser.lat,
+            updatedUser.lng,
+            updatedUser.picture,
+            uid
         ]);
 
-        // ทำการ UPDATE ข้อมูล
+        // Step 3: Execute the UPDATE query
         conn.query(formattedUpdateSql, (err, result) => {
             if (err) {
                 return res.status(400).json({ msg: err.message });
@@ -210,6 +223,7 @@ router.put("/update/:uid", (req, res) => {
         });
     });
 });
+
 
 
 
