@@ -26,12 +26,15 @@ router.get('/:uid', (req, res) => {
 });
 
 // select user by some phone
-router.get('/search/:phone', (req, res) => {
+// PHONE SHOW SELF FIX IT TO NOT SHOW YOURSELF
+router.get('/search/:phone/:uid', (req, res) => {
     let phone = req.params.phone;
-    let sql = 'SELECT * FROM user WHERE phone LIKE ? AND type = 1';
+    let uid = req.params.uid;
+    let sql = 'SELECT * FROM user WHERE phone LIKE ? AND type = 1 AND uid != ?';
 
     sql = mysql.format(sql, [
-        `${phone}%`
+        `${phone}%`,
+        uid
     ]);
 
     conn.query(sql, (err, result) => {
