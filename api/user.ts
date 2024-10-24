@@ -71,7 +71,20 @@ router.post('/register', (req, res)=>{
 
 // Get customer
 router.get("/", (req, res) => {
+    
     conn.query('SELECT * FROM user WHERE type = 1', (err, result, fields)=>{
+      res.json(result);
+    });
+  });
+
+  router.get("/home/:uid", (req, res) => {
+    let uid = req.params.uid;
+    let sql = 'SELECT * FROM user WHERE type = 1 AND uid != ?'
+
+    sql = mysql.format(sql, [
+        uid
+    ]);
+    conn.query(sql, (err, result, fields)=>{
       res.json(result);
     });
   });
